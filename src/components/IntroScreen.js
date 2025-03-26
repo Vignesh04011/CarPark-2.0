@@ -1,14 +1,18 @@
-import React, { useState } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, Text, Image, StyleSheet, Dimensions, Animated, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+
+const { width } = Dimensions.get('window');
 
 const OnboardingScreen = () => {
   const navigation = useNavigation();
+  const scrollX = useRef(new Animated.Value(0)).current;
+  const scrollViewRef = useRef(null);
   const [currentIndex, setCurrentIndex] = useState(0);
-  
+
   const data = [
     {
-      image: require('../assets/images/welcome1.png'), 
+      image: require('../assets/images/welcome1.png'),
       title: 'Best Parking Spots',
       description: 'Discover the Best Parking Spots near you with CarPark!',
     },
@@ -18,41 +22,57 @@ const OnboardingScreen = () => {
       description: 'Find your way to the nearest parking spot in seconds with Quick Navigation!',
     },
     {
-      image: require('../assets/images/welcome3.png'), 
+      image: require('../assets/images/welcome3.png'),
       title: 'Easy Booking',
       description: 'Book your parking spot with just a few taps.',
     },
   ];
 
-  const handleNext = () => {
-    if (currentIndex < data.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-    } else {
-      navigation.navigate('Auth', { screen: 'Login' }); // Navigate to Login screen when the last screen is reached
-    }
+  const handleScroll = (event) => {
+    const contentOffsetX = event.nativeEvent.contentOffset.x;
+    const newIndex = Math.round(contentOffsetX / width);
+    setCurrentIndex(newIndex);
+  };
+
+  const handleGetStarted = () => {
+    navigation.navigate('Auth', { screen: 'Login' });
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.imageContainer}>
-        <Image source={data[currentIndex].image} style={styles.image} />
-      </View>
-      <Text style={styles.title}>{data[currentIndex].title}</Text>
-      <Text style={styles.description}>{data[currentIndex].description}</Text>
+    <View style={styles.container}>
+      <ScrollView
+        ref={scrollViewRef}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onScroll={Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], {
+          useNativeDriver: false,
+        })}
+        onMomentumScrollEnd={handleScroll}
+      >
+        {data.map((item, index) => (
+          <View key={index} style={[styles.slide, { width }]}>
+            <Image source={item.image} style={styles.image} />
+            <Text style={styles.title}>{item.title}</Text>
+            <Text style={styles.description}>{item.description}</Text>
+          </View>
+        ))}
+      </ScrollView>
 
-      <TouchableOpacity style={styles.button} onPress={handleNext}>
-        <Image source={require('../assets/icons/next.png')} style={styles.logo} />
-      </TouchableOpacity>
+      {/* Get Started Button (Above Dots) */}
+      {currentIndex === data.length - 1 && (
+        <View style={styles.getStartedContainer}>
+          <Text style={styles.getStartedText} onPress={handleGetStarted}>Get Started</Text>
+        </View>
+      )}
 
+      {/* Pagination Dots */}
       <View style={styles.pagination}>
         {data.map((_, index) => (
-          <View 
-            key={index} 
-            style={[styles.dot, currentIndex === index && styles.activeDot]} 
-          />
+          <View key={index} style={[styles.dot, currentIndex === index && styles.activeDot]} />
         ))}
       </View>
-    </ScrollView>
+    </View>
   );
 };
 
@@ -61,60 +81,66 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'white',
+    backgroundColor: 'rgb(190, 226, 238)',
     paddingTop: 40,
   },
-  imageContainer: {
+  slide: {
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 30,
   },
   image: {
-    width: 400,
-    height: 400,
+    width: width * 0.8,
+    height: width * 0.8,
     resizeMode: 'contain',
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 10,
+    fontSize: 26,
+    fontWeight: '700',
     textAlign: 'center',
+    color: '#222',
+    marginBottom: 10,
+    fontFamily: 'sans-serif-medium',
   },
   description: {
-    fontSize: 16,
+    fontSize: 18,
     textAlign: 'center',
+    color: '#555',
+    lineHeight: 24,
     marginBottom: 20,
-  },
-  button: {
-    marginTop: 20,
-    width: 50,
-    height: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 55,
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-    borderColor: '#FFF',
-  },
-  logo: {
-    width: 80,
-    height: 80,
-    marginTop: 80,
+    fontFamily: 'sans-serif',
   },
   pagination: {
     flexDirection: 'row',
-    marginTop: 20,
+    alignItems: 'center',
+    marginTop: 10, // Adjusted margin
   },
   dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginTop: 90,
-    backgroundColor: '#D3D3D3',
-    margin: 10,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#FFF',
+    marginHorizontal: 5,
+    marginBottom: 30,
   },
   activeDot: {
     backgroundColor: '#00008B',
+    width: 14,
+    height: 14,
+  },
+  getStartedContainer: {
+    position: 'absolute',
+    bottom: 80, // Moved above dots
+    backgroundColor: '#00008B',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    marginBottom: 30,
+  },
+  getStartedText: {
+    color: '#FFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });
 
