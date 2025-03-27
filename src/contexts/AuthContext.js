@@ -2,24 +2,22 @@ import React, { createContext, useState, useEffect } from 'react';
 import { auth } from '../firebaseConfig';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 
-export const AuthContext = createContext();
+// Initialize with default values
+export const AuthContext = createContext({
+  user: null,
+  loading: true,
+  logout: () => {}
+});
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const checkUser = async () => {
-      setLoading(true);
-      setUser(auth.currentUser); // Ensure persistence is checked
-      setLoading(false);
-    };
-    checkUser();
-
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
+      setLoading(false);
     });
-
     return unsubscribe;
   }, []);
 
@@ -27,7 +25,7 @@ export const AuthProvider = ({ children }) => {
     try {
       await signOut(auth);
     } catch (error) {
-      console.error("Logout Error:", error);
+      console.error("Logout error:", error);
     }
   };
 

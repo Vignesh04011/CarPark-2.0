@@ -8,7 +8,7 @@ import { AuthContext } from '../context/AuthContext';
 const Stack = createStackNavigator();
 
 const AuthStack = () => {
-  const { user } = useContext(AuthContext);
+  const { user } = useContext(AuthContext) || {};
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>

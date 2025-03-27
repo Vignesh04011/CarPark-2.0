@@ -16,7 +16,9 @@ const firebaseConfig = {
 // Check if Firebase is already initialized
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-// Check if Auth is already initialized
-const auth = getAuth(app);
+// Initialize Firebase Auth with AsyncStorage persistence
+const auth = initializeAuth(app, {
+  persistence: getReactNativePersistence(AsyncStorage),
+});
 
 export { auth };

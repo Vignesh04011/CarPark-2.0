@@ -35,7 +35,8 @@ const OnboardingScreen = () => {
   };
 
   const handleGetStarted = () => {
-    navigation.navigate('Auth', { screen: 'Login' });
+    navigation.navigate('AuthStack');
+
   };
 
   return (

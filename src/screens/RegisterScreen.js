@@ -1,226 +1,237 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
-import styled from 'styled-components/native';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ImageBackground,
+  Alert,
+} from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { auth } from '../firebaseConfig';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 
-const RegisterScreen = ({ navigation }) => {
+const RegisterScreen = () => {
+  const navigation = useNavigation();
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [passwordStrength, setPasswordStrength] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  // Function to validate password strength
+  const isPasswordStrong = (password) => {
+    const regex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    return regex.test(password);
+  };
 
   const handleRegister = async () => {
-    setLoading(true);
-    setError('');
+    if (!name || !email || !password || !confirmPassword) {
+      Alert.alert('Error', 'All fields are required!');
+      return;
+    }
+
+    if (!isPasswordStrong(password)) {
+      Alert.alert(
+        'Weak Password',
+        'Password must be at least 8 characters long and include:\n- One uppercase letter\n- One number\n- One special character (@, #, $, etc.)'
+      );
+      return;
+    }
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match!');
-      setLoading(false);
+      Alert.alert('Error', 'Passwords do not match!');
       return;
     }
 
-    if (passwordStrength < 4) {
-      setError('Password must be strong: At least 6 characters, 1 uppercase, 1 number, 1 special character.');
-      setLoading(false);
-      return;
-    }
-
+    setLoading(true);
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      navigation.replace('Home'); // Navigate to Home after successful registration
-    } catch (err) {
-      if (err.code === 'auth/email-already-in-use') {
-        setError('Email is already in use. Try another email.');
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(userCredential.user, { displayName: name });
+
+      Alert.alert('Success', 'Account created successfully!');
+      navigation.navigate('Login');
+    } catch (error) {
+      if (error.code === 'auth/email-already-in-use') {
+        Alert.alert('Error', 'This email is already registered. Try logging in.');
       } else {
-        setError('Registration failed. Try again.');
+        Alert.alert('Registration Failed', error.message);
       }
     }
-
     setLoading(false);
   };
 
-  // Function to check password strength
-  const checkPasswordStrength = (pass) => {
-    setPassword(pass);
-    let strength = 0;
-
-    if (pass.length >= 6) strength += 1;
-    if (/[A-Z]/.test(pass)) strength += 1; // At least one uppercase letter
-    if (/[0-9]/.test(pass)) strength += 1; // At least one number
-    if (/[^A-Za-z0-9]/.test(pass)) strength += 1; // At least one special character
-
-    setPasswordStrength(strength);
-  };
-
-  // Determine color based on strength
-  const getStrengthColor = () => {
-    switch (passwordStrength) {
-      case 1: return '#FF3E3E'; // Red (Weak)
-      case 2: return '#FFA500'; // Orange (Moderate)
-      case 3: return '#FFD700'; // Yellow (Good)
-      case 4: return '#28a745'; // Green (Strong)
-      default: return '#e0e0e0'; // Grey (Empty)
-    }
-  };
-
   return (
-    <Container>
-      <Title>Register</Title>
-      {error ? <ErrorText>{error}</ErrorText> : null}
-      
-      <Input
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
+    <ImageBackground
+      source={require('../assets/images/registration.png')}
+      style={styles.background}
+    >
+      <View style={styles.overlay}>
+        <Text style={styles.title}>Create an Account</Text>
+        <Text style={styles.subtitle}>Join us to get started!</Text>
 
-      <PasswordContainer>
-        <PasswordInput
-          placeholder="Password"
-          value={password}
-          onChangeText={checkPasswordStrength} // Check strength as user types
-          secureTextEntry={!showPassword}
-        />
-        <ShowHideButton onPress={() => setShowPassword(!showPassword)}>
-          <ShowHideText>{showPassword ? 'Hide' : 'Show'}</ShowHideText>
-        </ShowHideButton>
-      </PasswordContainer>
+        <View style={styles.inputContainerWrapper}>
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.input}
+              placeholder="Full Name"
+              placeholderTextColor="#FFFFFF"
+              value={name}
+              onChangeText={setName}
+            />
 
-      {/* Password Strength Bar */}
-      <StrengthBar>
-        <StrengthSegment filled={passwordStrength >= 1} color={getStrengthColor()} />
-        <StrengthSegment filled={passwordStrength >= 2} color={getStrengthColor()} />
-        <StrengthSegment filled={passwordStrength >= 3} color={getStrengthColor()} />
-        <StrengthSegment filled={passwordStrength >= 4} color={getStrengthColor()} />
-      </StrengthBar>
-      <StrengthText color={getStrengthColor()}>
-        {passwordStrength === 1 && 'Weak'}
-        {passwordStrength === 2 && 'Moderate'}
-        {passwordStrength === 3 && 'Good'}
-        {passwordStrength === 4 && 'Strong'}
-      </StrengthText>
+            <TextInput
+              style={styles.input}
+              placeholder="Email"
+              placeholderTextColor="#FFFFFF"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+            />
 
-      <PasswordContainer>
-        <PasswordInput
-          placeholder="Confirm Password"
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-          secureTextEntry={!showConfirmPassword}
-        />
-        <ShowHideButton onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-          <ShowHideText>{showConfirmPassword ? 'Hide' : 'Show'}</ShowHideText>
-        </ShowHideButton>
-      </PasswordContainer>
+            {/* Password Field */}
+            <View style={styles.passwordContainer}>
+              <TextInput
+                style={styles.passwordInput}
+                placeholder="Password"
+                placeholderTextColor="#FFFFFF"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+              />
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                <Text style={styles.toggleText}>{showPassword ? '🙈' : '👁️'}</Text>
+              </TouchableOpacity>
+            </View>
 
-      <Button onPress={handleRegister}>
-        {loading ? <ActivityIndicator color="#fff" /> : <ButtonText>Register</ButtonText>}
-      </Button>
+            {/* Confirm Password Field */}
+            <View style={styles.passwordContainer}>
+              <TextInput
+                style={styles.passwordInput}
+                placeholder="Confirm Password"
+                placeholderTextColor="#FFFFFF"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry={!showConfirmPassword}
+              />
+              <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+                <Text style={styles.toggleText}>{showConfirmPassword ? '🙈' : '👁️'}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
 
-      <SignupText onPress={() => navigation.navigate('Login')}>
-        Already have an account? Login
-      </SignupText>
-    </Container>
+        <TouchableOpacity style={styles.button} onPress={handleRegister} disabled={loading}>
+          <Text style={styles.buttonText}>{loading ? 'Signing Up...' : 'Sign Up'}</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+          <Text style={styles.loginText}>
+            Already have an account? <Text style={styles.linkText}>Login</Text>
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </ImageBackground>
   );
 };
 
-// Styled Components
-const Container = styled.View`
-  flex: 1;
-  justify-content: center;
-  align-items: center;
-  padding: 20px;
-  background-color: #f5f5f5;
-`;
-
-const Title = styled.Text`
-  font-size: 24px;
-  font-weight: bold;
-  margin-bottom: 20px;
-`;
-
-const Input = styled.TextInput`
-  width: 90%;
-  padding: 10px;
-  margin-bottom: 10px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  background-color: white;
-`;
-
-const PasswordContainer = styled.View`
-  flex-direction: row;
-  align-items: center;
-  width: 90%;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  background-color: white;
-  margin-bottom: 10px;
-`;
-
-const PasswordInput = styled.TextInput`
-  flex: 1;
-  padding: 10px;
-`;
-
-const ShowHideButton = styled.TouchableOpacity`
-  padding: 10px;
-`;
-
-const ShowHideText = styled.Text`
-  color: #007bff;
-  font-weight: bold;
-`;
-
-const Button = styled.TouchableOpacity`
-  background-color: #007bff;
-  padding: 10px;
-  width: 90%;
-  align-items: center;
-  border-radius: 5px;
-  margin-top: 10px;
-`;
-
-const ButtonText = styled.Text`
-  color: white;
-  font-size: 16px;
-`;
-
-const SignupText = styled.Text`
-  margin-top: 10px;
-  color: #007bff;
-`;
-
-const ErrorText = styled.Text`
-  color: red;
-  margin-bottom: 10px;
-`;
-
-// Password Strength Styles
-const StrengthBar = styled.View`
-  width: 90%;
-  height: 8px;
-  flex-direction: row;
-  margin-bottom: 10px;
-`;
-
-const StrengthSegment = styled.View`
-  flex: 1;
-  height: 100%;
-  margin: 1px;
-  background-color: ${(props) => (props.filled ? props.color : '#e0e0e0')};
-`;
-
-const StrengthText = styled.Text`
-  color: ${(props) => props.color};
-  font-weight: bold;
-  margin-bottom: 10px;
-`;
+const styles = StyleSheet.create({
+  background: {
+    flex: 1,
+    resizeMode: 'cover',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  overlay: {
+    flex: 1,
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  title: {
+    fontSize: 30,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginTop: 100,
+    marginBottom: 5,
+  },
+  subtitle: {
+    fontSize: 18,
+    color: '#DDDDDD',
+    marginBottom: 20,
+  },
+  inputContainerWrapper: {
+    width: '100%',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    padding: 15,
+    borderRadius: 15,
+  },
+  inputContainer: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  input: {
+    width: '100%',
+    height: 55,
+    backgroundColor: 'transparent',
+    borderRadius: 30,
+    paddingHorizontal: 20,
+    fontSize: 16,
+    marginBottom: 15,
+    color: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
+  },
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    height: 55,
+    borderRadius: 30,
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
+    paddingHorizontal: 20,
+    justifyContent: 'space-between',
+    marginBottom: 15,
+  },
+  passwordInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#FFFFFF',
+  },
+  toggleText: {
+    fontSize: 18,
+    color: '#FFFFFF',
+    paddingHorizontal: 10,
+  },
+  button: {
+    backgroundColor: '#00008B',
+    paddingVertical: 15,
+    width: '100%',
+    borderRadius: 30,
+    alignItems: 'center',
+    elevation: 6,
+  },
+  buttonText: {
+    color: '#FFF',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  loginText: {
+    marginTop: 20,
+    fontSize: 16,
+    color: '#FFFFFF',
+  },
+  linkText: {
+    color: '#4DA8DA',
+    fontWeight: '700',
+  },
+});
 
 export default RegisterScreen;
