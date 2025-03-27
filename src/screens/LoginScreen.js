@@ -24,7 +24,6 @@ const LoginScreen = () => {
 
   const handleLogin = () => {
     setLoading(true);
-    // Your login logic here
     setTimeout(() => setLoading(false), 2000);
   };
 
@@ -38,77 +37,78 @@ const LoginScreen = () => {
         style={styles.background}
         resizeMode="cover"
       >
-        <ScrollView
-          contentContainerStyle={styles.scrollContainer}
-          keyboardShouldPersistTaps="handled"
-        >
-          <View style={styles.content}>
-            <Text style={styles.title}>Welcome Back</Text>
-            <Text style={styles.subtitle}>Log in to continue</Text>
+        <View style={styles.overlayContainer}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContainer}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View style={styles.content}>
+              <Text style={styles.title}>Welcome Back</Text>
+              <Text style={styles.subtitle}>Log in to continue</Text>
 
-            <View style={styles.formContainer}>
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Email</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter your email"
-                  placeholderTextColor="#A0A0A0"
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  editable={!loading}
-                />
-              </View>
+              <View style={styles.formContainer}>
+                {/* Email Input */}
+                <View style={styles.inputContainer}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Enter your email"
+                    placeholderTextColor="#FFFFFF"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    editable={!loading}
+                  />
+                </View>
 
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Password</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter your password"
-                  placeholderTextColor="#A0A0A0"
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry
-                  editable={!loading}
-                />
-              </View>
+                {/* Password Input */}
+                <View style={styles.inputContainer}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Enter your password"
+                    placeholderTextColor="#FFFFFF"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry
+                    editable={!loading}
+                  />
+                </View>
 
-              <TouchableOpacity
-                style={styles.forgotPasswordButton}
-                activeOpacity={0.7}
-                onPress={() => navigation.navigate('ForgotPassword')}
-                disabled={loading}
-              >
-                <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.loginButton, loading && styles.disabledButton]}
-                onPress={handleLogin}
-                activeOpacity={0.7}
-                disabled={loading}
-              >
-                {loading ? (
-                  <ActivityIndicator color="#FFF" size="small" />
-                ) : (
-                  <Text style={styles.loginButtonText}>Login</Text>
-                )}
-              </TouchableOpacity>
-
-              <View style={styles.signupContainer}>
-                <Text style={styles.signupText}>Don't have an account? </Text>
-                <TouchableOpacity 
+                <TouchableOpacity
+                  style={styles.forgotPasswordButton}
                   activeOpacity={0.7}
-                  onPress={() => navigation.navigate('Register')}
+                  onPress={() => navigation.navigate('ForgotPassword')}
                   disabled={loading}
                 >
-                  <Text style={styles.signupLink}>Sign Up</Text>
                 </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.loginButton, loading && styles.disabledButton]}
+                  onPress={handleLogin}
+                  activeOpacity={0.7}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <ActivityIndicator color="#FFF" size="small" />
+                  ) : (
+                    <Text style={styles.loginButtonText}>Login</Text>
+                  )}
+                </TouchableOpacity>
+
+                <View style={styles.signupContainer}>
+                  <Text style={styles.signupText}>Don't have an account? </Text>
+                  <TouchableOpacity 
+                    activeOpacity={0.7}
+                    onPress={() => navigation.navigate('Register')}
+                    disabled={loading}
+                  >
+                    <Text style={styles.signupLink}>Sign Up</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
-          </View>
-        </ScrollView>
+          </ScrollView>
+        </View>
       </ImageBackground>
     </KeyboardAvoidingView>
   );
@@ -122,6 +122,10 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  overlayContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
   scrollContainer: {
     flexGrow: 1,
     justifyContent: 'center',
@@ -131,7 +135,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 25,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   title: {
     fontSize: 28,
@@ -153,19 +156,20 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     color: '#FFFFFF',
-    marginBottom: 8,
-    fontSize: 14,
-    fontWeight: '500',
+    marginBottom: 5,
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   input: {
     width: '100%',
     height: 50,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 8,
     paddingHorizontal: 15,
+    fontSize: 16,
+    marginBottom: 15,
     color: '#FFFFFF',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: 'rgba(255, 255, 255, 0.6)',
   },
   forgotPasswordButton: {
     alignSelf: 'flex-end',

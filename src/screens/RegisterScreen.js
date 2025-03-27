@@ -22,7 +22,6 @@ const RegisterScreen = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Function to validate password strength
   const isPasswordStrong = (password) => {
     const regex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     return regex.test(password);
@@ -73,66 +72,62 @@ const RegisterScreen = () => {
         <Text style={styles.title}>Create an Account</Text>
         <Text style={styles.subtitle}>Join us to get started!</Text>
 
-        <View style={styles.inputContainerWrapper}>
-          <View style={styles.inputContainer}>
+        <View style={styles.formContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Full Name"
+            placeholderTextColor="#FFFFFF"
+            value={name}
+            onChangeText={setName}
+          />
+
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            placeholderTextColor="#FFFFFF"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+          />
+
+          <View style={styles.passwordContainer}>
             <TextInput
-              style={styles.input}
-              placeholder="Full Name"
+              style={styles.passwordInput}
+              placeholder="Password"
               placeholderTextColor="#FFFFFF"
-              value={name}
-              onChangeText={setName}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
             />
-
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              placeholderTextColor="#FFFFFF"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-            />
-
-            {/* Password Field */}
-            <View style={styles.passwordContainer}>
-              <TextInput
-                style={styles.passwordInput}
-                placeholder="Password"
-                placeholderTextColor="#FFFFFF"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-              />
-              <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                <Text style={styles.toggleText}>{showPassword ? '🙈' : '👁️'}</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Confirm Password Field */}
-            <View style={styles.passwordContainer}>
-              <TextInput
-                style={styles.passwordInput}
-                placeholder="Confirm Password"
-                placeholderTextColor="#FFFFFF"
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                secureTextEntry={!showConfirmPassword}
-              />
-              <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-                <Text style={styles.toggleText}>{showConfirmPassword ? '🙈' : '👁️'}</Text>
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+              <Text style={styles.toggleText}>{showPassword ? '🙈' : '👁️'}</Text>
+            </TouchableOpacity>
           </View>
+
+          <View style={styles.passwordContainer}>
+            <TextInput
+              style={styles.passwordInput}
+              placeholder="Confirm Password"
+              placeholderTextColor="#FFFFFF"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry={!showConfirmPassword}
+            />
+            <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+              <Text style={styles.toggleText}>{showConfirmPassword ? '🙈' : '👁️'}</Text>
+            </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity style={styles.button} onPress={handleRegister} disabled={loading}>
+            <Text style={styles.buttonText}>{loading ? 'Signing Up...' : 'Sign Up'}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+            <Text style={styles.loginText}>
+              Already have an account? <Text style={styles.linkText}>Login</Text>
+            </Text>
+          </TouchableOpacity>
         </View>
-
-        <TouchableOpacity style={styles.button} onPress={handleRegister} disabled={loading}>
-          <Text style={styles.buttonText}>{loading ? 'Signing Up...' : 'Sign Up'}</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-          <Text style={styles.loginText}>
-            Already have an account? <Text style={styles.linkText}>Login</Text>
-          </Text>
-        </TouchableOpacity>
       </View>
     </ImageBackground>
   );
@@ -150,14 +145,12 @@ const styles = StyleSheet.create({
     width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)', // Darker overlay for better contrast
   },
   title: {
     fontSize: 30,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginTop: 100,
     marginBottom: 5,
   },
   subtitle: {
@@ -165,38 +158,32 @@ const styles = StyleSheet.create({
     color: '#DDDDDD',
     marginBottom: 20,
   },
-  inputContainerWrapper: {
-    width: '100%',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    padding: 15,
+  formContainer: {
+    width: '85%',
+    maxWidth: 400,
+    padding: 20,
     borderRadius: 15,
-  },
-  inputContainer: {
-    width: '100%',
-    alignItems: 'center',
   },
   input: {
     width: '100%',
-    height: 55,
-    backgroundColor: 'transparent',
-    borderRadius: 30,
-    paddingHorizontal: 20,
+    height: 50,
+    borderRadius: 8,
+    paddingHorizontal: 15,
     fontSize: 16,
     marginBottom: 15,
     color: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#FFFFFF',
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     width: '100%',
-    height: 55,
-    borderRadius: 30,
+    height: 50,
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#FFFFFF',
-    paddingHorizontal: 20,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    paddingHorizontal: 15,
     justifyContent: 'space-between',
     marginBottom: 15,
   },
@@ -208,15 +195,14 @@ const styles = StyleSheet.create({
   toggleText: {
     fontSize: 18,
     color: '#FFFFFF',
-    paddingHorizontal: 10,
   },
   button: {
     backgroundColor: '#00008B',
     paddingVertical: 15,
     width: '100%',
-    borderRadius: 30,
+    borderRadius: 8,
     alignItems: 'center',
-    elevation: 6,
+    marginTop: 10,
   },
   buttonText: {
     color: '#FFF',
@@ -227,6 +213,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     fontSize: 16,
     color: '#FFFFFF',
+    textAlign: 'center',
   },
   linkText: {
     color: '#4DA8DA',
