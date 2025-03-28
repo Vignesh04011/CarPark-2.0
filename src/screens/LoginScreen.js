@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -10,30 +10,45 @@ import {
   Platform,
   ScrollView,
   Dimensions,
-  ActivityIndicator
-} from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+  ActivityIndicator,
+  Alert,
+} from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { auth } from "../firebaseConfig"; // ✅ Correct Firebase import
+import { signInWithEmailAndPassword } from "firebase/auth";
 
-const { width, height } = Dimensions.get('window');
+const { width, height } = Dimensions.get("window");
 
 const LoginScreen = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const navigation = useNavigation();
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert("Error", "Please enter both email and password.");
+      return;
+    }
+
     setLoading(true);
-    setTimeout(() => setLoading(false), 2000);
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      navigation.replace("Home"); // Navigate to Home after successful login
+    } catch (error) {
+      Alert.alert("Login Failed", error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
     >
       <ImageBackground
-        source={require('../assets/images/login.png')}
+        source={require("../assets/images/login.png")}
         style={styles.background}
         resizeMode="cover"
       >
@@ -77,9 +92,10 @@ const LoginScreen = () => {
                 <TouchableOpacity
                   style={styles.forgotPasswordButton}
                   activeOpacity={0.7}
-                  onPress={() => navigation.navigate('ForgotPassword')}
+                  onPress={() => navigation.navigate("ForgotPassword")}
                   disabled={loading}
                 >
+                  <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -97,9 +113,9 @@ const LoginScreen = () => {
 
                 <View style={styles.signupContainer}>
                   <Text style={styles.signupText}>Don't have an account? </Text>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     activeOpacity={0.7}
-                    onPress={() => navigation.navigate('Register')}
+                    onPress={() => navigation.navigate("Register")}
                     disabled={loading}
                   >
                     <Text style={styles.signupLink}>Sign Up</Text>
@@ -119,94 +135,88 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   background: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   },
   overlayContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   scrollContainer: {
     flexGrow: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   content: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 25,
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+    fontWeight: "bold",
+    color: "#FFFFFF",
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#E0E0E0',
+    color: "#E0E0E0",
     marginBottom: 30,
   },
   formContainer: {
-    width: '100%',
+    width: "100%",
     maxWidth: 400,
   },
   inputContainer: {
     marginBottom: 20,
   },
-  inputLabel: {
-    color: '#FFFFFF',
-    marginBottom: 5,
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
   input: {
-    width: '100%',
+    width: "100%",
     height: 50,
     borderRadius: 8,
     paddingHorizontal: 15,
     fontSize: 16,
     marginBottom: 15,
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.6)',
+    borderColor: "rgba(255, 255, 255, 0.6)",
   },
   forgotPasswordButton: {
-    alignSelf: 'flex-end',
+    alignSelf: "flex-end",
     marginBottom: 25,
   },
   forgotPasswordText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 14,
   },
   loginButton: {
-    width: '100%',
+    width: "100%",
     height: 50,
-    backgroundColor: '#00008B',
+    backgroundColor: "#00008B",
     borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 20,
   },
   disabledButton: {
-    backgroundColor: '#4A5568',
+    backgroundColor: "#4A5568",
   },
   loginButtonText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   signupContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
     marginTop: 10,
   },
   signupText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
   signupLink: {
-    color: '#4DA8DA',
-    fontWeight: '600',
+    color: "#4DA8DA",
+    fontWeight: "600",
   },
 });
 
