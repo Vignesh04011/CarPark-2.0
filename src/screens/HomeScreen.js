@@ -1,8 +1,7 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Image, ScrollView } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Image, ScrollView, ImageBackground } from "react-native";
 
 const HomeScreen = () => {
-  // Sample Booking Data (Fetch from Firebase later)
   const [booking, setBooking] = useState({
     status: "Booked",
     slot: "A12",
@@ -14,7 +13,6 @@ const HomeScreen = () => {
     paymentStatus: "Paid",
   });
 
-  // Sample Nearby Parking Data
   const nearbyParking = [
     {
       id: 1,
@@ -46,83 +44,94 @@ const HomeScreen = () => {
   ];
 
   return (
-    <ScrollView style={styles.container}>
-      {/* Header Section */}
-      <View style={styles.header}>
-        <Text style={styles.location}>📍 New York, USA</Text>
-        <TouchableOpacity>
-          <Image source={require("../assets/icons/notification.png")} style={styles.icon} />
-        </TouchableOpacity>
-      </View>
-
-      {/* Wallet Balance */}
-      <View style={styles.walletCard}>
-        <Text style={styles.balanceLabel}>Your Balance</Text>
-        <Text style={styles.balanceAmount}>$4,219.00</Text>
-        <TouchableOpacity style={styles.addButton}>
-          <Image source={require("../assets/icons/add.png")} style={styles.icon} />
-        </TouchableOpacity>
-      </View>
-
-      {/* Live Booking Session */}
-      <View style={styles.bookingCard}>
-        <Text style={styles.sectionTitle}>🚗 Live Booking Session</Text>
-        <Text style={styles.status}>Status: {booking.status}</Text>
-        <Text>📍 Location: {booking.location}</Text>
-        <Text>🅿️ Slot: {booking.slot}</Text>
-        <Text>⏳ Time: {booking.startTime} - {booking.endTime}</Text>
-        <Text>🚘 Car: {booking.carModel} ({booking.licensePlate})</Text>
-        <Text>💳 Payment: {booking.paymentStatus}</Text>
-
-        {/* Quick Actions */}
-        <View style={styles.actions}>
-          <TouchableOpacity style={styles.button}>
-            <Text style={styles.buttonText}>Extend Booking</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.button, styles.cancelButton]}>
-            <Text style={styles.buttonText}>Cancel Booking</Text>
+    <ImageBackground source={require("../assets/images/background.jpg")} style={styles.background}>
+      <ScrollView contentContainerStyle={styles.container}>
+        
+        {/* Header */}
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.greeting}>Hello, John Doe 👋</Text>
+            <Text style={styles.location}>📍 New York, USA</Text>
+          </View>
+          <TouchableOpacity>
+            <Image source={require("../assets/icons/notification.png")} style={styles.icon} />
           </TouchableOpacity>
         </View>
-      </View>
 
-      {/* Search Parking */}
-      <View style={styles.searchContainer}>
-        <Image source={require("../assets/icons/search.png")} style={styles.icon} />
-        <TextInput placeholder="Find Parking Space..." style={styles.searchInput} />
-      </View>
+        {/* Wallet Balance */}
+        <View style={styles.walletCard}>
+          <Text style={styles.balanceLabel}>Your Balance</Text>
+          <Text style={styles.balanceAmount}>$4,219.00</Text>
+        </View>
 
-      {/* Nearby Parking Spaces */}
-      <Text style={styles.sectionTitle}>📍 Nearby Parking Spaces</Text>
-      {nearbyParking.map((spot) => (
-        <View key={spot.id} style={styles.parkingCard}>
-          <Image source={spot.image} style={styles.parkingImage} />
-          <View style={styles.parkingInfo}>
-            <Text style={styles.parkingName}>{spot.name}</Text>
-            <Text style={styles.parkingLocation}>{spot.location}</Text>
-            <Text style={styles.parkingDetails}>
-              {spot.price} • {spot.time} away • {spot.availableSlots} Available
-            </Text>
+        {/* Live Booking */}
+        <View style={styles.bookingCard}>
+          <Text style={styles.sectionTitle}>🚗 Live Booking Session</Text>
+          <Text style={styles.status}>Status: {booking.status}</Text>
+          <Text>📍 Location: {booking.location}</Text>
+          <Text>🅿️ Slot: {booking.slot}</Text>
+          <Text>⏳ Time: {booking.startTime} - {booking.endTime}</Text>
+          <Text>🚘 Car: {booking.carModel} ({booking.licensePlate})</Text>
+          <Text>💳 Payment: {booking.paymentStatus}</Text>
+
+          {/* Buttons */}
+          <View style={styles.actions}>
+            <TouchableOpacity style={styles.button}>
+              <Text style={styles.buttonText}>Extend Booking</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.button, styles.cancelButton]}>
+              <Text style={styles.buttonText}>Cancel Booking</Text>
+            </TouchableOpacity>
           </View>
         </View>
-      ))}
-    </ScrollView>
+
+        {/* Search */}
+        <View style={styles.searchContainer}>
+          <Image source={require("../assets/icons/search.png")} style={styles.icon} />
+          <TextInput placeholder="Find Parking Space..." placeholderTextColor="#AAA" style={styles.searchInput} />
+        </View>
+
+        {/* Nearby Parking */}
+        <Text style={styles.sectionTitle}>📍 Nearby Parking Spaces</Text>
+        {nearbyParking.map((spot) => (
+          <View key={spot.id} style={styles.parkingCard}>
+            <Image source={spot.image} style={styles.parkingImage} />
+            <View style={styles.parkingInfo}>
+              <Text style={styles.parkingName}>{spot.name}</Text>
+              <Text style={styles.parkingLocation}>{spot.location}</Text>
+              <Text style={styles.parkingDetails}>
+                {spot.price} • {spot.time} away • {spot.availableSlots} Available
+              </Text>
+            </View>
+          </View>
+        ))}
+      </ScrollView>
+    </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  background: {
     flex: 1,
-    backgroundColor: "#6A0DAD", // Purple Theme
-    padding: 20,
+    resizeMode: "cover",
+  },
+  container: {
+    flexGrow: 1,
+    paddingHorizontal: 20,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: 10,
+    marginTop: 20,
+  },
+  greeting: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#FFFFFF",
   },
   location: {
-    color: "#fff",
+    color: "#FFD700",
     fontSize: 16,
     fontWeight: "bold",
   },
@@ -132,7 +141,7 @@ const styles = StyleSheet.create({
     resizeMode: "contain",
   },
   walletCard: {
-    backgroundColor: "#fff",
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
     padding: 15,
     borderRadius: 12,
     marginVertical: 15,
@@ -143,15 +152,15 @@ const styles = StyleSheet.create({
   },
   balanceLabel: {
     fontSize: 14,
-    color: "#666",
+    color: "#fff",
   },
   balanceAmount: {
     fontSize: 22,
     fontWeight: "bold",
-    color: "#6A0DAD",
+    color: "#FFD700",
   },
   addButton: {
-    backgroundColor: "#6A0DAD",
+    backgroundColor: "#FFf",
     width: 30,
     height: 30,
     borderRadius: 15,
@@ -159,7 +168,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   bookingCard: {
-    backgroundColor: "#fff",
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
     padding: 15,
     borderRadius: 12,
     elevation: 5,
@@ -169,12 +178,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     marginBottom: 10,
-    color: "#fff",
+    color: "#FFD700",
   },
   status: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "green",
+    color: "lightgreen",
   },
   actions: {
     flexDirection: "row",
@@ -182,7 +191,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   button: {
-    backgroundColor: "#6A0DAD",
+    backgroundColor: "#FFD700",
     padding: 10,
     borderRadius: 8,
   },
@@ -196,7 +205,7 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#fff",
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
     padding: 10,
     borderRadius: 12,
     marginVertical: 15,
@@ -204,10 +213,11 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     marginLeft: 10,
+    color: "#fff",
   },
   parkingCard: {
     flexDirection: "row",
-    backgroundColor: "#fff",
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
     padding: 15,
     borderRadius: 12,
     marginBottom: 10,
@@ -226,15 +236,15 @@ const styles = StyleSheet.create({
   parkingName: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#333",
+    color: "#fff",
   },
   parkingLocation: {
     fontSize: 14,
-    color: "#777",
+    color: "#ccc",
   },
   parkingDetails: {
     fontSize: 14,
-    color: "#555",
+    color: "#eee",
     marginTop: 5,
   },
 });

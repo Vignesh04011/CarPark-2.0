@@ -70,11 +70,14 @@ const styles = StyleSheet.create({
     height: 70,
     backgroundColor: "black",
     borderRadius: 25,
-    elevation: 10, // 3D shadow effect for Android
-    shadowColor: "#000", // 3D shadow effect for iOS
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
+    borderWidth: 0,  // Ensures no white border appears
+    borderColor: "transparent", // Ensures no border color
+    elevation: 5, // Lowered to reduce the white outline effect on Android
+    shadowColor: "rgba(0, 0, 0, 0.8)", // More subtle shadow for iOS
+    shadowOffset: { width: 0, height: 6 }, 
+    shadowOpacity: 0.25, 
+    shadowRadius: 6, 
+    overflow: "hidden", // Ensures the border color does not affect the design
   },
   tabContainer: {
     alignItems: "center",
@@ -91,7 +94,7 @@ const styles = StyleSheet.create({
     tintColor: "#888",
   },
   iconActive: {
-    tintColor: "#007BFF",
+    tintColor: "#33e9ff",
   },
 });
 
