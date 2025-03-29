@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, PermissionsAndroid, Image, Modal, Text, TouchableOpacity } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import Geolocation from '@react-native-community/geolocation';
+import { useNavigation } from '@react-navigation/native';
 
 const parkingSpots = [
     { id: 1, name: "Orion Mall", latitude: 18.9934303, longitude:  73.1157848, price: "₹10000", rating: 3, spaces: 3000, image: require('../assets/images/orion-mall.png') },
@@ -19,6 +20,8 @@ const MapScreen = () => {
 
     const [selectedSpot, setSelectedSpot] = useState(null);
     const [modalVisible, setModalVisible] = useState(false);
+
+    const navigation = useNavigation(); // ✅ Initialize navigation
 
     useEffect(() => {
         const requestLocationPermission = async () => {
@@ -107,7 +110,13 @@ const MapScreen = () => {
 
                                 {/* Buttons */}
                                 <View style={styles.buttonContainer}>
-                                    <TouchableOpacity style={styles.bookButton}>
+                                    <TouchableOpacity 
+                                        style={styles.bookButton} 
+                                        onPress={() => {
+                                            setModalVisible(false);
+                                            navigation.navigate('Slot', { spot: selectedSpot }); // ✅ Pass spot data
+                                        }}
+                                    >
                                         <Text style={styles.bookButtonText}>Book Slot</Text>
                                     </TouchableOpacity>
                                     <TouchableOpacity style={styles.wishlistButton}>
