@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, ScrollView, ImageBackground } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ImageBackground,
+  FlatList,
+} from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import { useRoute } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const BookingScreen = () => {
   const route = useRoute();
@@ -16,6 +23,8 @@ const BookingScreen = () => {
     carModel: "",
     qrData: "",
   });
+
+  const [bookingHistory, setBookingHistory] = useState([]);
 
   useEffect(() => {
     if (bookingDetails) {
@@ -38,72 +47,81 @@ const BookingScreen = () => {
     }
   }, [bookingDetails]);
 
-  const bookingHistory = [
-    {
-      id: "1",
-      location: "Central Mall Parking",
-      slot: "B08",
-      startTime: "5:00 PM",
-      endTime: "7:00 PM",
-      licensePlate: "XYZ-5678",
-      carModel: "Honda Civic",
-    },
-    {
-      id: "2",
-      location: "Green Park Basement",
-      slot: "C22",
-      startTime: "2:00 PM",
-      endTime: "4:00 PM",
-      licensePlate: "LMN-7890",
-      carModel: "Ford Mustang",
-    },
-  ];
+  useEffect(() => {
+    const loadBookingHistory = async () => {
+      try {
+        const storedBookings = await AsyncStorage.getItem("bookings");
+        if (storedBookings) {
+          const parsedBookings = JSON.parse(storedBookings);
+          const history = parsedBookings.filter(
+            (booking) => booking.id !== currentBooking.qrData
+          );
+          setBookingHistory(history);
+        }
+      } catch (error) {
+        console.error("Error loading booking history:", error);
+      }
+    };
+    loadBookingHistory();
+  }, [currentBooking.qrData]);
+
+  const renderHistoryItem = ({ item }) => (
+    <View style={styles.historyCard}>
+      <Text style={styles.bookingText}>📍 {item.spotName}</Text>
+      <Text style={styles.bookingText}>🅿️ Slot: {item.selectedSlots.join(", ")}</Text>
+      <Text style={styles.bookingText}>
+        ⏳ Time: {new Date(item.checkInTime).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        })} -{" "}
+        {new Date(item.checkOutTime).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        })}
+      </Text>
+      <Text style={styles.bookingText}>
+        🚘 Car: {item.carType} ({item.numberPlate})
+      </Text>
+    </View>
+  );
 
   return (
     <ImageBackground
       source={require("../assets/images/background.jpg")}
       style={styles.background}
     >
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <View style={styles.container}>
-          <View style={styles.header}>
-            <Text style={styles.title}>🚗 My Bookings</Text>
-          </View>
-
-          <View style={styles.bookingCard}>
-            <Text style={styles.sectionTitle}>🔄 Active Booking</Text>
-            <Text style={styles.bookingText}>📍 {currentBooking.location}</Text>
-            <Text style={styles.bookingText}>🅿️ Slot: {currentBooking.slot}</Text>
-            <Text style={styles.bookingText}>
-              ⏳ Time: {currentBooking.startTime} - {currentBooking.endTime}
-            </Text>
-            <Text style={styles.bookingText}>
-              🚘 Car: {currentBooking.carModel} ({currentBooking.licensePlate})
-            </Text>
-            <View style={styles.qrContainer}>
-              {currentBooking.qrData ? (
-                <QRCode value={currentBooking.qrData} size={150} />
-              ) : (
-                <Text>No QR Code Data</Text>
-              )}
-            </View>
-          </View>
-
-          <Text style={styles.sectionTitle}>📜 Booking History</Text>
-          {bookingHistory.map((item) => (
-            <View key={item.id} style={styles.historyCard}>
-              <Text style={styles.bookingText}>📍 {item.location}</Text>
-              <Text style={styles.bookingText}>🅿️ Slot: {item.slot}</Text>
-              <Text style={styles.bookingText}>
-                ⏳ Time: {item.startTime} - {item.endTime}
-              </Text>
-              <Text style={styles.bookingText}>
-                🚘 Car: {item.carModel} ({item.licensePlate})
-              </Text>
-            </View>
-          ))}
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>🚗 My Bookings</Text>
         </View>
-      </ScrollView>
+
+        <View style={styles.bookingCard}>
+          <Text style={styles.sectionTitle}>🔄 Active Booking</Text>
+          <Text style={styles.bookingText}>📍 {currentBooking.location}</Text>
+          <Text style={styles.bookingText}>🅿️ Slot: {currentBooking.slot}</Text>
+          <Text style={styles.bookingText}>
+            ⏳ Time: {currentBooking.startTime} - {currentBooking.endTime}
+          </Text>
+          <Text style={styles.bookingText}>
+            🚘 Car: {currentBooking.carModel} ({currentBooking.licensePlate})
+          </Text>
+          <View style={styles.qrContainer}>
+            {currentBooking.qrData ? (
+              <QRCode value={currentBooking.qrData} size={150} />
+            ) : (
+              <Text>No QR Code Data</Text>
+            )}
+          </View>
+        </View>
+
+        <Text style={styles.sectionTitle}>📜 Booking History</Text>
+        <FlatList
+          data={bookingHistory}
+          renderItem={renderHistoryItem}
+          keyExtractor={(item) => item.id}
+          style={styles.flatList} // added style to flatlist
+        />
+      </View>
     </ImageBackground>
   );
 };
@@ -112,10 +130,6 @@ const styles = StyleSheet.create({
   background: {
     flex: 1,
     resizeMode: "cover",
-  },
-  scrollContainer: {
-    flexGrow: 1,
-    paddingBottom: 40,
   },
   container: {
     flex: 1,
@@ -161,6 +175,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 10,
   },
+  flatList: {
+    flex: 1,
+  }
 });
 
 export default BookingScreen;

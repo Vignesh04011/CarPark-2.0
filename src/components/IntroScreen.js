@@ -1,8 +1,17 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, Image, StyleSheet, Dimensions, Animated, ScrollView } from 'react-native';
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  Dimensions,
+  Animated,
+  ScrollView,
+  TouchableOpacity,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 const OnboardingScreen = () => {
   const navigation = useNavigation();
@@ -13,18 +22,21 @@ const OnboardingScreen = () => {
   const data = [
     {
       image: require('../assets/images/welcome1.png'),
-      title: 'Best Parking Spots',
-      description: 'Discover the Best Parking Spots near you with CarPark!',
+      title: 'Find Perfect Parking',
+      description: 'Discover the best parking spots near you with CarPark!',
+      colors: ['#4a90e2', '#1a73e8'],
     },
     {
       image: require('../assets/images/welcome2.png'),
       title: 'Quick Navigation',
-      description: 'Find your way to the nearest parking spot in seconds with Quick Navigation!',
+      description: 'Get turn-by-turn directions to available parking spots in seconds',
+      colors: ['#6e45e2', '#4a3ce0'],
     },
     {
       image: require('../assets/images/welcome3.png'),
       title: 'Easy Booking',
-      description: 'Book your parking spot with just a few taps.',
+      description: 'Reserve your spot with just a few taps - no hassle, no stress',
+      colors: ['#e24a90', '#e21a73'],
     },
   ];
 
@@ -36,11 +48,69 @@ const OnboardingScreen = () => {
 
   const handleGetStarted = () => {
     navigation.navigate('AuthStack');
+  };
 
+  const handleSkip = () => {
+    navigation.navigate('AuthStack');
+  };
+
+  const renderPaginationDots = () => {
+    return (
+      <View style={styles.pagination}>
+        {data.map((_, index) => {
+          const inputRange = [(index - 1) * width, index * width, (index + 1) * width];
+          const dotWidth = scrollX.interpolate({
+            inputRange,
+            outputRange: [8, 20, 8],
+            extrapolate: 'clamp',
+          });
+          const dotOpacity = scrollX.interpolate({
+            inputRange,
+            outputRange: [0.5, 1, 0.5],
+            extrapolate: 'clamp',
+          });
+
+          return (
+            <Animated.View
+              key={index}
+              style={[
+                styles.dot,
+                { 
+                  width: dotWidth,
+                  opacity: dotOpacity,
+                  backgroundColor: currentIndex === index ? data[index].colors[0] : '#ddd'
+                },
+              ]}
+            />
+          );
+        })}
+      </View>
+    );
+  };
+
+  const renderGetStartedButton = () => {
+    if (currentIndex === data.length - 1) {
+      return (
+        <TouchableOpacity 
+          style={[styles.getStartedContainer, { backgroundColor: data[currentIndex].colors[0] }]}
+          onPress={handleGetStarted}
+        >
+          <Text style={styles.getStartedText}>Get Started</Text>
+          <View style={styles.arrowPlaceholder} />
+        </TouchableOpacity>
+      );
+    }
+    return null;
   };
 
   return (
     <View style={styles.container}>
+      {/* Skip button */}
+      <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
+        <Text style={styles.skipText}>Skip</Text>
+      </TouchableOpacity>
+
+      {/* Slides */}
       <ScrollView
         ref={scrollViewRef}
         horizontal
@@ -50,28 +120,53 @@ const OnboardingScreen = () => {
           useNativeDriver: false,
         })}
         onMomentumScrollEnd={handleScroll}
+        scrollEventThrottle={16}
       >
-        {data.map((item, index) => (
-          <View key={index} style={[styles.slide, { width }]}>
-            <Image source={item.image} style={styles.image} />
-            <Text style={styles.title}>{item.title}</Text>
-            <Text style={styles.description}>{item.description}</Text>
-          </View>
-        ))}
+        {data.map((item, index) => {
+          const inputRange = [(index - 1) * width, index * width, (index + 1) * width];
+          const imageScale = scrollX.interpolate({
+            inputRange,
+            outputRange: [0.8, 1, 0.8],
+            extrapolate: 'clamp',
+          });
+          const imageTranslateY = scrollX.interpolate({
+            inputRange,
+            outputRange: [50, 0, 50],
+            extrapolate: 'clamp',
+          });
+
+          return (
+            <View key={index} style={[styles.slide, { width }]}>
+              <View style={[styles.gradientBackground, {
+                backgroundColor: item.colors[0]
+              }]} />
+              
+              <Animated.Image
+                source={item.image}
+                style={[
+                  styles.image, 
+                  { 
+                    transform: [{ scale: imageScale }, { translateY: imageTranslateY }],
+                  }
+                ]}
+              />
+              
+              {/* Icon placeholder - replace with your actual icon */}
+              <View style={styles.iconPlaceholder}>
+                <Text style={styles.iconPlaceholderText}>{item.icon}</Text>
+              </View>
+              
+              <Text style={styles.title}>{item.title}</Text>
+              <Text style={styles.description}>{item.description}</Text>
+            </View>
+          );
+        })}
       </ScrollView>
 
-      {/* Get Started Button (Above Dots) */}
-      {currentIndex === data.length - 1 && (
-        <View style={styles.getStartedContainer}>
-          <Text style={styles.getStartedText} onPress={handleGetStarted}>Get Started</Text>
-        </View>
-      )}
-
-      {/* Pagination Dots */}
-      <View style={styles.pagination}>
-        {data.map((_, index) => (
-          <View key={index} style={[styles.dot, currentIndex === index && styles.activeDot]} />
-        ))}
+      {/* Action buttons and pagination - REORDERED */}
+      <View style={styles.bottomContainer}>
+        {renderGetStartedButton()}
+        {renderPaginationDots()}
       </View>
     </View>
   );
@@ -80,69 +175,92 @@ const OnboardingScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgb(190, 226, 238)',
-    paddingTop: 40,
+    backgroundColor: '#fff',
+  },
+  skipButton: {
+    position: 'absolute',
+    top: 50,
+    right: 30,
+    zIndex: 10,
+    padding: 10,
+  },
+  skipText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   slide: {
     justifyContent: 'center',
     alignItems: 'center',
+    height: height,
+  },
+  gradientBackground: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
   },
   image: {
     width: width * 0.8,
     height: width * 0.8,
     resizeMode: 'contain',
+    marginBottom: 40,
+  },
+  iconPlaceholderText: {
+    color: '#fff',
+    fontSize: 12,
   },
   title: {
-    fontSize: 26,
+    fontSize: 32,
     fontWeight: '700',
     textAlign: 'center',
-    color: '#222',
-    marginBottom: 10,
-    fontFamily: 'sans-serif-medium',
+    color: '#fff',
+    marginBottom: 16,
+    paddingHorizontal: 40,
   },
   description: {
     fontSize: 18,
     textAlign: 'center',
-    color: '#555',
-    lineHeight: 24,
-    marginBottom: 20,
-    fontFamily: 'sans-serif',
+    color: 'rgba(255,255,255,0.9)',
+    lineHeight: 26,
+    marginBottom: 24,
+    paddingHorizontal: 40,
+  },
+  bottomContainer: {
+    position: 'absolute',
+    bottom: 60,
+    width: '100%',
+    alignItems: 'center',
   },
   pagination: {
+    marginTop: 20, // Added space between button and dots
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 10, // Adjusted margin
+    justifyContent: 'center',
   },
   dot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#FFF',
-    marginHorizontal: 5,
-    marginBottom: 30,
-  },
-  activeDot: {
-    backgroundColor: '#00008B',
-    width: 14,
-    height: 14,
+    height: 8,
+    borderRadius: 4,
+    marginHorizontal: 4,
   },
   getStartedContainer: {
-    position: 'absolute',
-    bottom: 80, // Moved above dots
-    backgroundColor: '#00008B',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 25,
-    marginBottom: 30,
+    paddingVertical: 16,
+    paddingHorizontal: 40,
+    borderRadius: 30,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
   },
   getStartedText: {
-    color: '#FFF',
+    color: '#fff',
     fontSize: 18,
-    fontWeight: 'bold',
-    textAlign: 'center',
+    fontWeight: '600',
+    marginRight: 10,
   },
+
 });
 
 export default OnboardingScreen;

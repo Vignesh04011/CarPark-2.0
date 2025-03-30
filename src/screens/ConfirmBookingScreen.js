@@ -44,12 +44,17 @@ const ConfirmBookingScreen = () => {
     setWalletBalance(balance);
   }, [balance]);
 
+  const validateVehicleNumber = (number) => {
+    const regex = /^[A-Z0-9]{6,10}$/i;
+    return regex.test(number.trim());
+  };
+
   const validateInputs = () => {
     if (!numberPlate.trim()) {
       Alert.alert('Validation Error', 'Please enter your vehicle number plate.');
       return false;
     }
-    if (!/^[A-Z0-9]{6,10}$/i.test(numberPlate.trim())) {
+    if (!validateVehicleNumber(numberPlate)) {
       Alert.alert(
         'Validation Error',
         'Please enter a valid number plate (6-10 alphanumeric characters).'
@@ -95,7 +100,7 @@ const ConfirmBookingScreen = () => {
     addTransaction({
       type: 'Booking Payment',
       time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-      amount: -bookingCost, // Make the amount negative
+      amount: -bookingCost,
     });
 
     const bookingId = `book-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`;
@@ -125,7 +130,7 @@ const ConfirmBookingScreen = () => {
     } catch (error) {
       console.error('Booking Error:', error);
       Alert.alert('Booking Error', 'Failed to complete booking. Please try again.');
-      updateBalance(balance + bookingCost); // Refund
+      updateBalance(balance + bookingCost);
     } finally {
       setLoading(false);
     }
