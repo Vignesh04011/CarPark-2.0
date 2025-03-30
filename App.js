@@ -9,6 +9,7 @@ import AppNavigation from './src/components/Appnavigation';
 import SlotSelectionScreen from './src/screens/SlotSelectionScreen';
 import { DataProvider } from './src/contexts/DataContext'; // Import DataProvider
 import ConfirmBookingScreen from './src/screens/ConfirmBookingScreen';
+import BookingScreen from './src/screens/BookingScreen';
 
 const Stack = createStackNavigator();
 
@@ -23,6 +24,7 @@ const App = () => {
           <Stack.Screen name="Home" component={AppNavigation} />
           <Stack.Screen name="Slot" component={SlotSelectionScreen} />
           <Stack.Screen name="ConfirmBooking" component={ConfirmBookingScreen} />
+          <Stack.Screen name="Booking" component={BookingScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </DataProvider>

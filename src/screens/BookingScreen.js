@@ -1,18 +1,42 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, Image, ScrollView, ImageBackground } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, StyleSheet, ScrollView, ImageBackground } from "react-native";
 import QRCode from "react-native-qrcode-svg";
+import { useRoute } from "@react-navigation/native";
 
 const BookingScreen = () => {
+  const route = useRoute();
+  const { bookingDetails } = route.params || {};
+
   const [currentBooking, setCurrentBooking] = useState({
-    location: "Downtown Parking Lot",
-    slot: "A12",
-    startTime: "10:00 AM",
-    endTime: "12:00 PM",
-    licensePlate: "ABC-1234",
-    carModel: "Toyota Corolla",
-    paymentStatus: "Paid",
-    qrData: "ABC-1234_A12_10:00-12:00",
+    location: "",
+    slot: "",
+    startTime: "",
+    endTime: "",
+    licensePlate: "",
+    carModel: "",
+    qrData: "",
   });
+
+  useEffect(() => {
+    if (bookingDetails) {
+      setCurrentBooking({
+        location: bookingDetails.spotName,
+        slot: bookingDetails.selectedSlots.join(", "),
+        startTime: new Date(bookingDetails.checkInTime).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        endTime: new Date(bookingDetails.checkOutTime).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        licensePlate: bookingDetails.numberPlate,
+        carModel: bookingDetails.carType,
+        qrData: bookingDetails.qrCodeValue,
+      });
+      console.log("QR Data:", bookingDetails.qrCodeValue);
+    }
+  }, [bookingDetails]);
 
   const bookingHistory = [
     {
@@ -23,7 +47,6 @@ const BookingScreen = () => {
       endTime: "7:00 PM",
       licensePlate: "XYZ-5678",
       carModel: "Honda Civic",
-      paymentStatus: "Paid",
     },
     {
       id: "2",
@@ -33,45 +56,52 @@ const BookingScreen = () => {
       endTime: "4:00 PM",
       licensePlate: "LMN-7890",
       carModel: "Ford Mustang",
-      paymentStatus: "Paid",
     },
   ];
 
   return (
-    <ImageBackground source={require("../assets/images/background.jpg")} style={styles.background}>
+    <ImageBackground
+      source={require("../assets/images/background.jpg")}
+      style={styles.background}
+    >
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.container}>
-          
-          {/* Header */}
           <View style={styles.header}>
             <Text style={styles.title}>🚗 My Bookings</Text>
           </View>
 
-          {/* Current Booking with QR Code */}
           <View style={styles.bookingCard}>
             <Text style={styles.sectionTitle}>🔄 Active Booking</Text>
             <Text style={styles.bookingText}>📍 {currentBooking.location}</Text>
             <Text style={styles.bookingText}>🅿️ Slot: {currentBooking.slot}</Text>
-            <Text style={styles.bookingText}>⏳ Time: {currentBooking.startTime} - {currentBooking.endTime}</Text>
-            <Text style={styles.bookingText}>🚘 Car: {currentBooking.carModel} ({currentBooking.licensePlate})</Text>
-            <Text style={[styles.paymentStatus, { color: "green" }]}>💳 {currentBooking.paymentStatus}</Text>
+            <Text style={styles.bookingText}>
+              ⏳ Time: {currentBooking.startTime} - {currentBooking.endTime}
+            </Text>
+            <Text style={styles.bookingText}>
+              🚘 Car: {currentBooking.carModel} ({currentBooking.licensePlate})
+            </Text>
             <View style={styles.qrContainer}>
-              <QRCode value={currentBooking.qrData} size={150} />
+              {currentBooking.qrData ? (
+                <QRCode value={currentBooking.qrData} size={150} />
+              ) : (
+                <Text>No QR Code Data</Text>
+              )}
             </View>
           </View>
 
-          {/* Booking History */}
           <Text style={styles.sectionTitle}>📜 Booking History</Text>
           {bookingHistory.map((item) => (
             <View key={item.id} style={styles.historyCard}>
               <Text style={styles.bookingText}>📍 {item.location}</Text>
               <Text style={styles.bookingText}>🅿️ Slot: {item.slot}</Text>
-              <Text style={styles.bookingText}>⏳ Time: {item.startTime} - {item.endTime}</Text>
-              <Text style={styles.bookingText}>🚘 Car: {item.carModel} ({item.licensePlate})</Text>
-              <Text style={[styles.paymentStatus, { color: "green" }]}>💳 {item.paymentStatus}</Text>
+              <Text style={styles.bookingText}>
+                ⏳ Time: {item.startTime} - {item.endTime}
+              </Text>
+              <Text style={styles.bookingText}>
+                🚘 Car: {item.carModel} ({item.licensePlate})
+              </Text>
             </View>
           ))}
-
         </View>
       </ScrollView>
     </ImageBackground>
@@ -85,7 +115,7 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     flexGrow: 1,
-    paddingBottom: 40, // Added padding for scrolling
+    paddingBottom: 40,
   },
   container: {
     flex: 1,
@@ -124,11 +154,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#fff",
     marginVertical: 3,
-  },
-  paymentStatus: {
-    fontSize: 16,
-    fontWeight: "bold",
-    marginTop: 10,
   },
   historyCard: {
     backgroundColor: "rgba(255, 255, 255, 0.2)",
