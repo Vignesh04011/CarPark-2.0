@@ -137,7 +137,7 @@ const ConfirmBookingScreen = () => {
   };
 
   return (
-    <LinearGradient colors={['#ECE9E6', '#2B2D42']} style={styles.container}>
+    <LinearGradient colors={['#424242', '#000000']} style={styles.container}>
       <View style={styles.card}>
         <Text style={styles.title}>Confirm Booking</Text>
         <Text style={styles.subtitle}>{spot.name}</Text>

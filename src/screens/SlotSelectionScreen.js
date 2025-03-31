@@ -8,31 +8,51 @@ import {
   Alert,
   Dimensions,
   ScrollView,
+  Animated,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import LinearGradient from 'react-native-linear-gradient';
 
 const MAX_SELECTABLE_SLOTS = 5;
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 const SlotSelectionScreen = () => {
   const route = useRoute();
-  const { spot } = route.params || {};
-
-  if (!spot) {
-    return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>No Parking Spot Data!</Text>
-      </View>
-    );
-  }
-
   const navigation = useNavigation();
+  const { spot } = route.params || {};
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  // Animation effects
+  useEffect(() => {
+    Animated.parallel([
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1.05,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+        ])
+      ),
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      })
+    ]).start();
+  }, []);
+
   const [slots, setSlots] = useState(
-    Array.from({ length: 20 }, (_, index) => ({
+    Array.from({ length: spot?.totalSlots || 20 }, (_, index) => ({
       id: index + 1,
-      label: `Slots ${index + 1}`,
+      label: `Slot ${index + 1}`,
       reserved: false,
       selected: false,
     }))
@@ -78,14 +98,20 @@ const SlotSelectionScreen = () => {
     };
 
     loadReservedSlots();
-  }, [spot.id]);
+  }, [spot?.id]);
 
   const handleSlotSelection = (id) => {
     const selectedSlotsCount = slots.filter((slot) => slot.selected).length;
     const targetSlot = slots.find((slot) => slot.id === id);
 
+    if (targetSlot.reserved) return;
+
     if (selectedSlotsCount >= MAX_SELECTABLE_SLOTS && !targetSlot.selected) {
-      Alert.alert(`Limit Reached`, `You can select up to ${MAX_SELECTABLE_SLOTS} slots.`);
+      Alert.alert(
+        `Limit Reached`, 
+        `You can select up to ${MAX_SELECTABLE_SLOTS} slots.`,
+        [{ text: 'OK' }]
+      );
       return;
     }
 
@@ -107,176 +133,307 @@ const SlotSelectionScreen = () => {
     setConfirming(true);
 
     try {
-      await AsyncStorage.setItem(`selectedSlots_${spot.id}`, JSON.stringify(selectedSlots));
       navigation.navigate('ConfirmBooking', { selectedSlots, spot });
     } catch (error) {
-      console.error('Error saving slots:', error);
-      Alert.alert('Error', 'Failed to save your selection. Please try again.');
+      console.error('Error confirming selection:', error);
+      Alert.alert('Error', 'Failed to process your selection. Please try again.');
     } finally {
       setConfirming(false);
     }
   };
 
-  // Split slots into two columns dynamically
-  const chunkedSlots = [];
-  for (let i = 0; i < slots.length; i += Math.ceil(slots.length / 2)) {
-    chunkedSlots.push(slots.slice(i, i + Math.ceil(slots.length / 2)));
-  }
+  const SlotItem = React.memo(({ slot }) => (
+    <Animated.View style={[
+      styles.slotContainer,
+      { opacity: fadeAnim },
+      slot.selected && { transform: [{ scale: pulseAnim }] }
+    ]}>
+      <TouchableOpacity
+        style={[
+          styles.slot,
+          slot.reserved && styles.reservedSlot,
+          slot.selected && styles.selectedSlot,
+          !slot.reserved && !slot.selected && styles.availableSlot,
+        ]}
+        onPress={() => handleSlotSelection(slot.id)}
+        disabled={slot.reserved}
+        activeOpacity={0.7}
+      >
+        <Text style={[
+          styles.slotText,
+          slot.reserved && styles.reservedText,
+          slot.selected && styles.selectedText,
+        ]}>
+          {slot.label}
+        </Text>
+        {slot.selected && (
+          <View style={styles.selectedBadge}>
+            <View style={styles.selectedBadgeInner} />
+          </View>
+        )}
+      </TouchableOpacity>
+    </Animated.View>
+  ));
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#6200ea" />
-      </View>
+      <LinearGradient
+        colors={['#424242', '#000000']}
+        style={styles.loadingContainer}
+      >
+        <ActivityIndicator size="large" color="#ff416c" />
+        <Text style={styles.loadingText}>Loading Parking Slots...</Text>
+      </LinearGradient>
     );
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Select Slots for {spot.name}</Text>
+    <LinearGradient
+      colors={['#424242', '#000000']}
+      style={styles.container}
+    >
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <Animated.View style={[styles.header, { opacity: fadeAnim }]}>
+          <Text style={styles.title}>Select Your Parking Slots</Text>
+          <Text style={styles.subtitle}>{spot?.name || "Parking Location"}</Text>
+        </Animated.View>
 
-      {/* Slot Legend */}
-      <View style={styles.legendContainer}>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendColor, styles.availableSlot]} />
-          <Text style={styles.legendText}>Available</Text>
-        </View>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendColor, styles.reservedSlot]} />
-          <Text style={styles.legendText}>Reserved</Text>
-        </View>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendColor, styles.selectedSlot]} />
-          <Text style={styles.legendText}>Selected</Text>
-        </View>
-      </View>
+        <Animated.View style={[styles.card, { opacity: fadeAnim }]}>
+          <View style={styles.legendContainer}>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendDot, styles.availableDot]} />
+              <Text style={styles.legendText}>Available</Text>
+            </View>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendDot, styles.reservedDot]} />
+              <Text style={styles.legendText}>Reserved</Text>
+            </View>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendDot, styles.selectedDot]} />
+              <Text style={styles.legendText}>Selected</Text>
+            </View>
+          </View>
 
-      <Text style={styles.slotLimitText}>Maximum {MAX_SELECTABLE_SLOTS} Slots per booking.</Text>
+          <Text style={styles.slotLimit}>Select up to {MAX_SELECTABLE_SLOTS} slots</Text>
 
-      {/* Slots Grid */}
-      <View style={styles.slotsContainer}>
-        {chunkedSlots.map((column, columnIndex) => (
-          <View key={columnIndex} style={styles.column}>
-            {column.map((slot) => (
-              <TouchableOpacity
-                key={slot.id}
-                style={[
-                  styles.slot,
-                  slot.reserved
-                    ? styles.reservedSlot
-                    : slot.selected
-                    ? styles.selectedSlot
-                    : styles.availableSlot,
-                ]}
-                onPress={() => !slot.reserved && handleSlotSelection(slot.id)}
-                disabled={slot.reserved}
-              >
-                <Text style={[styles.slotText, slot.reserved && styles.reservedSlotText]}>
-                  {slot.label}
-                </Text>
-              </TouchableOpacity>
+          <View style={styles.slotsGrid}>
+            {[...Array(2)].map((_, col) => (
+              <View key={`col-${col}`} style={styles.column}>
+                {slots.slice(col * 10, (col + 1) * 10).map((slot) => (
+                  <SlotItem key={`slot-${slot.id}`} slot={slot} />
+                ))}
+              </View>
             ))}
           </View>
-        ))}
-      </View>
+        </Animated.View>
 
-      {/* Confirm Button */}
-      <TouchableOpacity
-        style={[styles.confirmButton, confirming && styles.disabledButton]}
-        onPress={handleConfirmSelection}
-        disabled={confirming}
-      >
-        {confirming ? (
-          <ActivityIndicator size="small" color="white" />
-        ) : (
-          <Text style={styles.confirmButtonText}>Confirm Selection</Text>
-        )}
-      </TouchableOpacity>
-    </ScrollView>
+        <Animated.View style={{ opacity: fadeAnim }}>
+          <TouchableOpacity
+            onPress={handleConfirmSelection}
+            disabled={confirming}
+            activeOpacity={0.8}
+          >
+            <LinearGradient
+              colors={['#ff416c', '#ff4b2b']}
+              style={[styles.confirmButton, confirming && styles.disabledButton]}
+              start={{x: 0, y: 0}}
+              end={{x: 1, y: 0}}
+            >
+              {confirming ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <Text style={styles.confirmButtonText}>Confirm Selection</Text>
+              )}
+            </LinearGradient>
+          </TouchableOpacity>
+        </Animated.View>
+      </ScrollView>
+    </LinearGradient>
   );
 };
 
-// Define the styles object
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1,
+    flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: 'white',
+    marginTop: 20,
+    fontSize: 16,
+  },
+  scrollContainer: {
     padding: 20,
-    paddingTop: 50, // Adjust padding for better spacing
+    paddingBottom: 40,
+  },
+  header: {
+    marginBottom: 25,
+    alignItems: 'center',
   },
   title: {
-    fontSize: width * 0.06,
+    fontSize: 28,
     fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
+    color: 'white',
+    marginBottom: 5,
+    textShadowColor: 'rgba(0,0,0,0.3)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
+  },
+  subtitle: {
+    fontSize: 18,
+    color: 'rgba(255,255,255,0.8)',
+    fontWeight: '500',
+  },
+  card: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 25,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 5,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
   },
   legendContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginBottom: 20,
+    padding: 15,
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    borderRadius: 12,
   },
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  legendColor: {
-    width: width * 0.05,
-    height: width * 0.05,
-    borderRadius: 5,
-    marginRight: 5,
+  legendDot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    marginRight: 8,
+  },
+  availableDot: {
+    backgroundColor: '#4CAF50',
+    shadowColor: '#4CAF50',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  reservedDot: {
+    backgroundColor: '#F44336',
+    shadowColor: '#F44336',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  selectedDot: {
+    backgroundColor: '#FFC107',
+    shadowColor: '#FFC107',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 4,
+    elevation: 3,
   },
   legendText: {
-    fontSize: width * 0.04,
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '500',
   },
-  slotsContainer: {
+  slotLimit: {
+    color: 'rgba(255,255,255,0.7)',
+    textAlign: 'center',
+    marginBottom: 20,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  slotsGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 20,
+    marginBottom: 10,
   },
   column: {
-    flex: 1,
-    alignItems: 'center',
+    width: '48%',
+  },
+  slotContainer: {
+    marginBottom: 12,
   },
   slot: {
-    width: width * 0.4,
-    height: width * 0.15,
+    height: 60,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 10,
-    marginVertical: 5,
+    borderRadius: 12,
+    position: 'relative',
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
   },
   availableSlot: {
-    backgroundColor: 'white',
-    borderWidth: 1,
-    borderColor: '#ccc',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
   },
   reservedSlot: {
-    backgroundColor: 'red',
-    opacity: 0.8,
+    backgroundColor: 'rgb(255, 18, 1)',
   },
   selectedSlot: {
-    backgroundColor: '#ffeb3b',
-    borderWidth: 2,
-    borderColor: '#ff9800',
+    backgroundColor: 'rgba(255, 193, 7, 0.9)',
+  },
+  slotText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  reservedText: {
+    color: 'rgba(255,255,255,0.7)',
+    textDecorationLine: 'line-through',
+  },
+  selectedText: {
+    color: '#333',
+  },
+  selectedBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  selectedBadgeInner: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#4CAF50',
   },
   confirmButton: {
-    backgroundColor: '#6200ea',
-    padding: 15,
-    borderRadius: 10,
-    alignItems: 'center',
+    borderRadius: 12,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 5,
   },
   confirmButtonText: {
     color: 'white',
-    fontSize: width * 0.04,
-    fontWeight: 'bold',
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  errorText: {
-    color: 'red',
     fontSize: 18,
+    fontWeight: 'bold',
+    padding: 16,
+    textAlign: 'center',
+  },
+  disabledButton: {
+    opacity: 0.7,
   },
 });
 

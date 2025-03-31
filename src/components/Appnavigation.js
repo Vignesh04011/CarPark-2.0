@@ -1,100 +1,192 @@
-import React from "react";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { View, Image, StyleSheet } from "react-native";
+import React, { useRef, useEffect } from 'react';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { View, Image, StyleSheet, Animated, Easing, TouchableOpacity } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 
 // Import Screens
-import HomeScreen from "../screens/HomeScreen";
-import WalletScreen from "../screens/WalletScreen";
-import NavigationScreen from "../screens/NavigationScreen";
-import BookingScreen from "../screens/BookingScreen";
-import ProfileScreen from "../screens/ProfileScreen";
+import HomeScreen from '../screens/HomeScreen';
+import WalletScreen from '../screens/WalletScreen';
+import NavigationScreen from '../screens/NavigationScreen';
+import BookingScreen from '../screens/BookingScreen';
+import ProfileScreen from '../screens/ProfileScreen';
 
-// Create Bottom Tab Navigator
+// Import your custom icons
+const icons = {
+  Home: require('../assets/icons/home.png'),
+  HomeFocused: require('../assets/icons/home.png'),
+  Wallet: require('../assets/icons/wallet.png'),
+  WalletFocused: require('../assets/icons/wallet.png'),
+  Navigation: require('../assets/icons/navigation.png'),
+  NavigationFocused: require('../assets/icons/navigation.png'),
+  Booking: require('../assets/icons/booking.png'),
+  BookingFocused: require('../assets/icons/booking.png'),
+  Profile: require('../assets/icons/profile.png'),
+  ProfileFocused: require('../assets/icons/profile.png'),
+};
+
 const Tab = createBottomTabNavigator();
+const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
-// Custom Tab Icon Component (Without Text)
-const TabIcon = ({ source, focused }) => (
-  <View style={[styles.tabContainer, focused && styles.tabActive]}>
-    <Image source={source} style={[styles.icon, focused && styles.iconActive]} />
-  </View>
-);
+const TabButton = ({ item, onPress, accessibilityState }) => {
+  const focused = accessibilityState.selected;
+  const scaleValue = useRef(new Animated.Value(1)).current;
+  const rotateValue = useRef(new Animated.Value(0)).current;
 
-const AppNavigation = () => {
+  useEffect(() => {
+    if (focused) {
+      Animated.parallel([
+        Animated.spring(scaleValue, {
+          toValue: 1.2,
+          useNativeDriver: true,
+        }),
+        Animated.timing(rotateValue, {
+          toValue: 1,
+          duration: 300,
+          easing: Easing.elastic(1.5),
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      Animated.spring(scaleValue, {
+        toValue: 1,
+        useNativeDriver: true,
+      }).start();
+      rotateValue.setValue(0);
+    }
+  }, [focused]);
+
+  const rotateInterpolation = rotateValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  // Get the appropriate icon based on route name and focus state
+  const iconSource = focused 
+    ? icons[`${item.name}Focused`] 
+    : icons[item.name];
+
   return (
-    <Tab.Navigator
-      screenOptions={({ route }) => ({
-        tabBarStyle: styles.tabBar,
-        headerShown: false,
-        tabBarShowLabel: false, // Hides the text labels
-        tabBarIcon: ({ focused }) => {
-          let iconSource;
-
-          switch (route.name) {
-            case "Home":
-              iconSource = require("../assets/icons/home.png");
-              break;
-            case "Wallet":
-              iconSource = require("../assets/icons/wallet.png");
-              break;
-            case "Navigation":
-              iconSource = require("../assets/icons/navigation.png");
-              break;
-            case "Booking":
-              iconSource = require("../assets/icons/booking.png");
-              break;
-            case "Profile":
-              iconSource = require("../assets/icons/profile.png");
-              break;
-          }
-
-          return <TabIcon source={iconSource} focused={focused} />;
+    <AnimatedTouchable
+      onPress={onPress}
+      activeOpacity={1}
+      style={[
+        styles.tabButton,
+        {
+          transform: [
+            { scale: scaleValue },
+            { rotate: rotateInterpolation },
+          ],
         },
-      })}
+      ]}
     >
-      <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Wallet" component={WalletScreen} />
-      <Tab.Screen name="Navigation" component={NavigationScreen} />
-      <Tab.Screen name="Booking" component={BookingScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
-    </Tab.Navigator>
+      <LinearGradient
+        colors={focused ? ['#424242', '#000000'] : ['transparent', 'transparent']}
+        style={[styles.tabIconContainer, focused && styles.activeTab]}
+      >
+        <Image 
+          source={iconSource}
+          style={[
+            styles.icon,
+            focused && styles.iconActive,
+            item.name === 'Navigation' && styles.centralIcon
+          ]}
+          resizeMode="contain"
+        />
+      </LinearGradient>
+    </AnimatedTouchable>
   );
 };
 
-// Styles for the 3D Navbar
+const AppNavigation = () => {
+  const tabs = [
+    { name: 'Home', component: HomeScreen },
+    { name: 'Wallet', component: WalletScreen },
+    { name: 'Navigation', component: NavigationScreen },
+    { name: 'Booking', component: BookingScreen },
+    { name: 'Profile', component: ProfileScreen },
+  ];
+
+  return (
+    <LinearGradient
+      colors={['#0f0c29', '#302b63', '#24243e']}
+      style={styles.background}
+    >
+      <Tab.Navigator
+        screenOptions={{
+          headerShown: false,
+          tabBarStyle: styles.tabBar,
+          tabBarShowLabel: false,
+        }}
+      >
+        {tabs.map((item, index) => (
+          <Tab.Screen
+            key={index}
+            name={item.name}
+            component={item.component}
+            options={{
+              tabBarButton: (props) => <TabButton {...props} item={item} />,
+            }}
+          />
+        ))}
+      </Tab.Navigator>
+    </LinearGradient>
+  );
+};
+
 const styles = StyleSheet.create({
+  background: {
+    flex: 1,
+  },
   tabBar: {
-    position: "absolute",
-    bottom: 15,
+    position: 'absolute',
+    bottom: 25,
     left: 20,
     right: 20,
     height: 70,
-    backgroundColor: "black",
+    backgroundColor: 'rgba(25, 25, 40, 0.8)',
     borderRadius: 25,
-    borderWidth: 0,  // Ensures no white border appears
-    borderColor: "transparent", // Ensures no border color
-    elevation: 5, // Lowered to reduce the white outline effect on Android
-    shadowColor: "rgba(0, 0, 0, 0.8)", // More subtle shadow for iOS
-    shadowOffset: { width: 0, height: 6 }, 
-    shadowOpacity: 0.25, 
-    shadowRadius: 6, 
-    overflow: "hidden", // Ensures the border color does not affect the design
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    elevation: 15,
+    shadowColor: '#00d2ff',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 15,
+    overflow: 'hidden',
   },
-  tabContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingTop: 35,
+  tabButton: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  tabActive: {
-    borderRadius: 5,
-    padding: 1,
+  tabIconContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+    bottom: -5,
+  },
+  activeTab: {
+    shadowColor: '#00d2ff',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.7,
+    shadowRadius: 10,
+    elevation: 10,
   },
   icon: {
-    width: 28,
-    height: 28,
-    tintColor: "#888",
+    width: 24,
+    height: 24,
+    tintColor: '#888',
   },
   iconActive: {
-    tintColor: "#33e9ff",
+    tintColor: '#fff',
+    width: 28,
+    height: 28,
+  },
+  centralIcon: {
+    width: 30,
+    height: 30,
   },
 });
 
