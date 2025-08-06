@@ -64,7 +64,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     width: '100%',
-    height: 500, // Adjust based on your image size
+    height: 400, // Adjust based on your image size
     resizeMode: 'cover',
   },
 });
